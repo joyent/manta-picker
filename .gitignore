@@ -1,0 +1,14 @@
+**/node_modules
+/make_stamps
+/tmp
+/cache/
+bits
+build
+/make_stamps
+docs/*.json
+docs/*.html
+cscope.in.out
+cscope.po.out
+cscope.out
+man
+smf/manifests/bapi.xml
