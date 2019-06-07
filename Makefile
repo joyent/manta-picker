@@ -12,7 +12,12 @@ NAME = picker
 
 JSON_FILES =		package.json
 JS_FILES :=		$(shell find lib test -name '*.js')
-SMF_MANIFESTS_IN =	smf/manifests/bapi.xml.in
+SMF_MANIFESTS_IN =	smf/manifests/picker.xml.in
+
+## Added by Rui
+JSSTYLE_FILES = $(JS_FILES)
+ESLINT_FILES = $(JS_FILES)
+## /Added by Rui
 
 NODE_PREBUILT_VERSION =	v6.17.0
 NODE_PREBUILT_TAG = zone64
@@ -50,12 +55,43 @@ include ./deps/eng/tools/mk/Makefile.node_modules.defs
 # Repo-specific targets
 #
 
+## TODO: [RUI] not sure if I need this.
+.PHONY: manta-scripts                                                 
+manta-scripts: deps/manta-scripts/.git                                
+    mkdir -p $(BUILD)/scripts                                         
+    cp deps/manta-scripts/*.sh $(BUILD)/scripts  
+
 .PHONY: all
 all: $(SMF_MANIFESTS) $(STAMP_NODE_MODULES)
 
 .PHONY: release
-release:
-	echo "Do work here, perhaps start by copying muskie or others"
+release: all
+    @echo "Building $(RELEASE_TARBALL)"                               
+    @mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)                 
+    @mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/boot                    
+    @mkdir -p $(RELSTAGEDIR)/site                                     
+    @touch $(RELSTAGEDIR)/site/.do-not-delete-me                      
+    @mkdir -p $(RELSTAGEDIR)/root                                     
+    @mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/etc             
+    cp -r \                                                           
+        $(ROOT)/build \                                               
+        $(ROOT)/bin \                                                 
+        $(ROOT)/boot \                                                
+        $(ROOT)/main.js \                                             
+        $(ROOT)/lib \                                                 
+        $(ROOT)/node_modules \                                        
+        $(ROOT)/package.json \                                        
+        $(ROOT)/sapi_manifests \                                      
+        $(ROOT)/smf \                                                 
+        $(ROOT)/test \                                                
+        $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)                       
+    mv $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/build/scripts \        
+        $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/boot                  
+    ln -s /opt/smartdc/$(NAME)/boot/setup.sh \                        
+        $(RELSTAGEDIR)/root/opt/smartdc/boot/setup.sh                 
+    chmod 755 $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/boot/setup.sh   
+    cd $(RELSTAGEDIR) && $(TAR) -I pigz -cf $(ROOT)/$(RELEASE_TARBALL) root site
+    @rm -rf $(RELSTAGEDIR)   
 
 
 #
