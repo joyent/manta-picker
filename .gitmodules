@@ -10,6 +10,6 @@
 [submodule "deps/javascriptlint"]
 	path = deps/javascriptlint
 	url = https://github.com/davepacheco/javascriptlint.git
-[submodule "manta-scripts"]
-	path = manta-scripts
+[submodule "deps/manta-scripts"]
+	path = deps/manta-scripts
 	url = git@github.com:joyent/manta-scripts.git
