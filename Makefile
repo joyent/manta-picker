@@ -8,7 +8,7 @@
 # Copyright 2019 Joyent, Inc.
 #
 
-NAME = picker 
+NAME=picker
 
 JSON_FILES =		package.json
 JS_FILES :=		$(shell find lib test -name '*.js')
@@ -23,8 +23,10 @@ NODE_PREBUILT_VERSION =	v6.17.0
 NODE_PREBUILT_TAG = zone64
 NODE_PREBUILT_IMAGE=c2c31b00-1d60-11e9-9a77-ff9f06554b0f
 
-RELEASE_TARBALL:= $(NAME)-pkg-$(STAMP).tar.gz
-RELSTAGEDIR       := /tmp/$(NAME)-$(STAMP)
+include ./deps/eng/tools/mk/Makefile.defs
+ROOT			:= $(shell pwd)
+RELEASE_TARBALL	:= $(NAME)-pkg-$(STAMP).tar.gz
+RELSTAGEDIR		:= /tmp/$(NAME)-$(STAMP)
 
 # This image is triton-origin-x86_64-18.4.0
 BASE_IMAGE_UUID = a9368831-958e-432d-a031-f8ce6768d190
@@ -35,7 +37,7 @@ BUILDIMAGE_PKGSRC =
 
 ENGBLD_USE_BUILDIMAGE   = true
 ENGBLD_REQUIRE          := $(shell git submodule update --init deps/eng)
-include ./deps/eng/tools/mk/Makefile.defs
+
 TOP ?= $(error Unable to access eng.git submodule Makefiles.)
 
 ifeq ($(shell uname -s),SunOS)
@@ -56,42 +58,44 @@ include ./deps/eng/tools/mk/Makefile.node_modules.defs
 #
 
 ## TODO: [RUI] not sure if I need this.
-.PHONY: manta-scripts                                                 
-manta-scripts: deps/manta-scripts/.git                                
-	mkdir -p $(BUILD)/scripts                                         
-	cp deps/manta-scripts/*.sh $(BUILD)/scripts  
+.PHONY: manta-scripts
+manta-scripts: deps/manta-scripts/.git
+	mkdir -p $(BUILD)/scripts
+	cp deps/manta-scripts/*.sh $(BUILD)/scripts
 
+## TODO: add check target to all
 .PHONY: all
 all: $(SMF_MANIFESTS) $(STAMP_NODE_MODULES)
 
 .PHONY: release
 release: all
-	@echo "Building $(RELEASE_TARBALL)"                               
-	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)                 
-	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/boot                    
-	@mkdir -p $(RELSTAGEDIR)/site                                     
-	@touch $(RELSTAGEDIR)/site/.do-not-delete-me                      
-	@mkdir -p $(RELSTAGEDIR)/root                                     
-	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/etc             
-	cp -r \                                                           
-	    $(ROOT)/build \                                               
-	    $(ROOT)/bin \                                                 
-	    $(ROOT)/boot \                                                
-	    $(ROOT)/main.js \                                             
-	    $(ROOT)/lib \                                                 
-	    $(ROOT)/node_modules \                                        
-	    $(ROOT)/package.json \                                        
-	    $(ROOT)/sapi_manifests \                                      
-	    $(ROOT)/smf \                                                 
-	    $(ROOT)/test \                                                
-	    $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)                       
-	mv $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/build/scripts \        
-	    $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/boot                  
-	ln -s /opt/smartdc/$(NAME)/boot/setup.sh \                        
-	    $(RELSTAGEDIR)/root/opt/smartdc/boot/setup.sh                 
-	chmod 755 $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/boot/setup.sh   
+	@echo "Building $(RELEASE_TARBALL)"
+	@echo "$(RELSTAGEDIR)"
+	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)
+	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/boot
+	@mkdir -p $(RELSTAGEDIR)/site
+	@touch $(RELSTAGEDIR)/site/.do-not-delete-me
+	@mkdir -p $(RELSTAGEDIR)/root
+	@mkdir -p $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/etc
+	cp -r \
+	    $(ROOT)/build \
+	    $(ROOT)/bin \
+	    $(ROOT)/boot \
+	    $(ROOT)/main.js \
+	    $(ROOT)/lib \
+	    $(ROOT)/node_modules \
+	    $(ROOT)/package.json \
+	    $(ROOT)/sapi_manifests \
+	    $(ROOT)/smf \
+	    $(ROOT)/test \
+	    $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)
+	mv $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/build/scripts \
+	    $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/boot
+	ln -s /opt/smartdc/$(NAME)/boot/setup.sh \
+	    $(RELSTAGEDIR)/root/opt/smartdc/boot/setup.sh
+	chmod 755 $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/boot/setup.sh
 	cd $(RELSTAGEDIR) && $(TAR) -I pigz -cf $(ROOT)/$(RELEASE_TARBALL) root site
-	@rm -rf $(RELSTAGEDIR)   
+	@rm -rf $(RELSTAGEDIR)
 
 
 #

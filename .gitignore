@@ -7,3 +7,4 @@ build
 /make_stamps
 docs/*.json
 docs/*.html
+*.tar.gz

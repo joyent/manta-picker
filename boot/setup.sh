@@ -18,7 +18,8 @@ if [[ -h $SOURCE ]]; then
 fi
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 PROFILE=/root/.bashrc
-SVC_ROOT=/opt/smartdc/muskie
+SVC_ROOT=/opt/smartdc/picker
+NODE_BIN=$SVC_ROOT/build/node/bin/node
 
 source ${DIR}/scripts/util.sh
 source ${DIR}/scripts/services.sh
@@ -47,80 +48,23 @@ function wait_for_resolv_conf {
 }
 
 
-function manta_setup_muskie {
-    local num_instances=1
-    local size=`json -f ${METADATA} SIZE`
-    if [ "$size" = "lab" ]
-    then
-        num_instances=4
-    elif [ "$size" = "production" ]
-    then
-        num_instances=16
-    fi
-
-    #Build the list of ports.  That'll be used for everything else.
-    local ports
-    local insecure_ports
-    for (( i=1; i<=$num_instances; i++ )); do
-        ports[$i]=`expr 8080 + $i`
-        insecure_ports[$i]=`expr 9080 + $i`
-    done
-
+function manta_setup_picker {
     #To preserve whitespace in echo commands...
     IFS='%'
 
-    #haproxy
-    for port in "${ports[@]}"; do
-        hainstances="$hainstances        server muskie-$port 127.0.0.1:$port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
-    done
-    for insecure_port in "${insecure_ports[@]}"; do
-        hainstances_insecure="$hainstances_insecure        server muskie-$insecure_port 127.0.0.1:$insecure_port check inter 10s slowstart 10s error-limit 3 on-error mark-down\n"
-    done
+    local picker_xml_in=$SVC_ROOT/smf/manifests/picker.xml.in
+    local picker_xml_out=$SVC_ROOT/smf/manifests/picker.xml
+    local picker_instance="picker"
+    sed -e "s#@@NODE@@#${NODE_BIN}#g" \
+        -e "s#@@PREFIX@@#${SVC_ROOT}#g" \
+        $picker_xml_in  > $picker_xml_out || \
+        fatal "could not process $picker_xml_in to $picker_xml_out"
 
-    sed -e "s#@@MUSKIE_INSTANCES@@#$hainstances#g" \
-        -e "s#@@MUSKIE_INSECURE_INSTANCES@@#$hainstances_insecure#g" \
-        $SVC_ROOT/etc/haproxy.cfg.in > $SVC_ROOT/etc/haproxy.cfg || \
-        fatal "could not process $src to $dest"
-
-    svccfg import $SVC_ROOT/smf/manifests/haproxy.xml || \
-        fatal "unable to import haproxy"
-
-    #muskie instances
-    local muskie_xml_in=$SVC_ROOT/smf/manifests/muskie.xml.in
-    for (( i=1; i<=$num_instances; i++ )); do
-        local muskie_instance="muskie-${ports[i]}"
-        local muskie_xml_out=$SVC_ROOT/smf/manifests/muskie-${ports[i]}.xml
-        sed -e "s#@@MUSKIE_PORT@@#${ports[i]}#g" \
-            -e "s#@@MUSKIE_INSECURE_PORT@@#${insecure_ports[i]}#g" \
-            -e "s#@@MUSKIE_INSTANCE_NAME@@#$muskie_instance#g" \
-            $muskie_xml_in  > $muskie_xml_out || \
-            fatal "could not process $muskie_xml_in to $muskie_xml_out"
-
-        svccfg import $muskie_xml_out || \
-            fatal "unable to import $muskie_instance: $muskie_xml_out"
-        svcadm enable "$muskie_instance" || \
-            fatal "unable to start $muskie_instance"
-        sleep 1
-    done
-
-    # Setup haproxy after the muskie's are kicked up
-    svcadm enable "manta/haproxy" || fatal "unable to start haproxy"
+    svccfg import $picker_xml_out || \
+        fatal "unable to import $picker_instance: $picker_xml_out"
+    svcadm enable "$picker_instance" || fatal "unable to start $picker_instance"
 
     unset IFS
-
-    # add manatee metadata backup cron
-
-    local crontab=/tmp/.manta_webapi_cron
-    crontab -l > $crontab
-
-    echo "30 * * * * /opt/smartdc/muskie/bin/backup_pg_dumps.sh >> /var/log/backup_pg_dump.log 2>&1" >> $crontab
-    [[ $? -eq 0 ]] || fatal "Unable to write to $crontab"
-    crontab $crontab
-    [[ $? -eq 0 ]] || fatal "Unable import crons"
-
-    #.bashrc
-    echo 'function req() { grep "$@" /var/log/muskie.log | bunyan ;}' \
-        >>/root/.bashrc
 }
 
 
@@ -132,24 +76,21 @@ echo "Running common setup scripts"
 manta_common_presetup
 
 echo "Adding local manifest directories"
-manta_add_manifest_dir "/opt/smartdc/muskie"
+manta_add_manifest_dir "/opt/smartdc/picker"
 
 manta_common_setup "picker"
 
 manta_ensure_zk
 
-echo "Setting up muskie"
+echo "Setting up picker"
 
 # MANTA-1827
 # Sometimes muskies come up before DNS resolvers are in /etc/resolv.conf
 # TODO: [RUI] this shouldn't happen.
 wait_for_resolv_conf
-manta_setup_muskie
+manta_setup_picker
 
 manta_common_setup_end
-
-# Setup the mlocate alias
-echo "alias mlocate='/opt/smartdc/muskie/bin/mlocate -f /opt/smartdc/muskie/etc/config.json'" >> $PROFILE
 
 exit 0
 
