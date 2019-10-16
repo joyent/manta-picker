@@ -11,12 +11,14 @@
 NAME=picker
 
 JSON_FILES =		package.json
-JS_FILES :=		$(shell find lib test -name '*.js')
+JS_FILES :=		$(shell find lib -name '*.js')
+JS_FILE +=		main.js
 SMF_MANIFESTS_IN =	smf/manifests/picker.xml.in
 
 ## Added by Rui
-JSSTYLE_FILES = $(JS_FILES)
-ESLINT_FILES = $(JS_FILES)
+JSSTYLE_FILES =		$(JS_FILES)
+JSSTYLE_FLAGS =		-f $(ROOT)/tools/jsstyle.conf
+ESLINT_FILES =		$(JS_FILES)
 ## /Added by Rui
 
 NODE_PREBUILT_VERSION =	v6.17.0
@@ -56,16 +58,13 @@ include ./deps/eng/tools/mk/Makefile.node_modules.defs
 #
 # Repo-specific targets
 #
-
-## TODO: [RUI] not sure if I need this.
 .PHONY: manta-scripts
 manta-scripts: deps/manta-scripts/.git
 	mkdir -p $(BUILD)/scripts
 	cp deps/manta-scripts/*.sh $(BUILD)/scripts
 
-## TODO: add check target to all
-.PHONY: all
-all: $(SMF_MANIFESTS) $(STAMP_NODE_MODULES)
+.PHONY: all check
+all: $(SMF_MANIFESTS) $(STAMP_NODE_MODULES) manta-scripts
 
 .PHONY: release
 release: all
@@ -87,7 +86,6 @@ release: all
 	    $(ROOT)/package.json \
 	    $(ROOT)/sapi_manifests \
 	    $(ROOT)/smf \
-	    $(ROOT)/test \
 	    $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)
 	mv $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/build/scripts \
 	    $(RELSTAGEDIR)/root/opt/smartdc/$(NAME)/boot
@@ -97,11 +95,14 @@ release: all
 	cd $(RELSTAGEDIR) && $(TAR) -I pigz -cf $(ROOT)/$(RELEASE_TARBALL) root site
 	@rm -rf $(RELSTAGEDIR)
 
+.PHONY: publish
+publish: release
+	mkdir -p $(ENGBLD_BITS_DIR)/$(NAME)
+	cp $(ROOT)/$(RELEASE_TARBALL) $(ENGBLD_BITS_DIR)/$(NAME)/$(RELEASE_TARBALL)
 
 #
 # Included target definitions.
 #
-
 include ./deps/eng/tools/mk/Makefile.deps
 ifeq ($(shell uname -s),SunOS)
 	include ./deps/eng/tools/mk/Makefile.node_prebuilt.targ

@@ -13,7 +13,7 @@
       "cueballOptions": {
           "resolvers": ["nameservice.{{DOMAIN_NAME}}"]
       }
-  }
+  },
 
   {{!
        probably not needed

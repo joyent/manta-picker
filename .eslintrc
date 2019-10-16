@@ -21,7 +21,11 @@
         // Style:
         "func-style": [ "error", "declaration" ],
 
-        "consistent-return": "error"
+        "consistent-return": "error",
+
+	"no-invalid-this": off,
+
+        "no-inner-declarations": off
     }
 }
 

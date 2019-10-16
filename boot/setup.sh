@@ -7,7 +7,7 @@
 #
 
 #
-# Copyright (c) 2017, Joyent, Inc.
+# Copyright 2019, Joyent, Inc.
 #
 
 set -o xtrace
@@ -24,29 +24,7 @@ NODE_BIN=$SVC_ROOT/build/node/bin/node
 source ${DIR}/scripts/util.sh
 source ${DIR}/scripts/services.sh
 
-
 export PATH=$SVC_ROOT/build/node/bin:$SVC_ROOT/node_modules/.bin:/opt/local/bin:/usr/sbin:/usr/bin:$PATH
-
-
-function wait_for_resolv_conf {
-    local attempt=0
-    local isok=0
-    local num_ns
-
-    while [[ $attempt -lt 30 ]]
-    do
-        num_ns=$(grep nameserver /etc/resolv.conf | wc -l)
-        if [ $num_ns -gt 1 ]
-        then
-                    isok=1
-                    break
-        fi
-            let attempt=attempt+1
-            sleep 1
-    done
-    [[ $isok -eq 1 ]] || fatal "manatee is not up"
-}
-
 
 function manta_setup_picker {
     #To preserve whitespace in echo commands...
@@ -68,8 +46,6 @@ function manta_setup_picker {
 }
 
 
-
-
 # Mainline
 
 echo "Running common setup scripts"
@@ -83,11 +59,6 @@ manta_common_setup "picker"
 manta_ensure_zk
 
 echo "Setting up picker"
-
-# MANTA-1827
-# Sometimes muskies come up before DNS resolvers are in /etc/resolv.conf
-# TODO: [RUI] this shouldn't happen.
-wait_for_resolv_conf
 manta_setup_picker
 
 manta_common_setup_end
