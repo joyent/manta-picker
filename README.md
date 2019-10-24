@@ -1,84 +1,118 @@
-<!--
-    This Source Code Form is subject to the terms of the Mozilla Public
-    License, v. 2.0. If a copy of the MPL was not distributed with this
-    file, You can obtain one at http://mozilla.org/MPL/2.0/.
--->
+# manta-picker
 
-<!--
-    Copyright (c) 2016, Joyent, Inc.
--->
+This repo contains an under-development, early prototype of a standalone service that implements functionality similar to the mpicker tool in manta-muskie.  A draft RFD describing the motivation, requirement and approach for manta-picker is [here](https://github.com/joyent/rfd/tree/master/rfd/0170)
 
-# eng: Joyent Engineering Guide
 
-This repo serves two purposes: (1) It defines the guidelines and best
-practices for Joyent engineering work (this is the primary goal), and (2) it
-also provides boilerplate for a Triton (formerly known as SDC) project repo,
-giving you a starting point for many of the suggestion practices defined in
-the guidelines. This is especially true for node.js-based REST API projects.
 
-**You probably want to be looking at the
-[actual Joyent engineering guide at docs/index.md](docs/index.md).**
-This README.md is a template for repos to use.
 
-**If you have cloned this repo to start a new project**
+## Manually Deployment Procedure
 
-Remove all eng guide blurb above, and use one of the following boilerplates
-as the first paragraph of the introduction of your repo:
+Normally the picker SAPI service would be created by manta-init and service instances would be created by manta-deploy.  However, joyent/sdc-manta has not yet been modified to do this.  Follow the steps below to manually deploy picker:
 
-- For Triton-related repos:
+**Build a picker image**
+
+`make buildimage`
+
+**Install picker image**
+
 ```
-    This repository is part of the Joyent Triton project. See the [contribution
-    guidelines](https://github.com/joyent/triton/blob/master/CONTRIBUTING.md) --
-    *Triton does not use GitHub PRs* -- and general documentation at the main
-    [Triton project](https://github.com/joyent/triton) page.
+headnode# sdc-imgadm import -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
+headnode# imgadm install -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
 ```
-- For Manta-related repos:
+
+**Create picker SAPI service**
+
 ```
-    This repository is part of the Joyent Manta project.  For contribution
-    guidelines, issues, and general documentation, visit the main
-    [Manta](http://github.com/joyent/manta) project page.
+headnode# sdc-sapi /services -d '
+{
+      "name": "picker",
+      "application_uuid": "<MANTA APPLICATION UUID>",
+      "params": {
+        "networks": [
+          "manta",
+          "admin"
+        ],
+        "ram": 256,
+        "image_uuid": "<PICKER IMAGE UUID>"
+      },
+      "metadata": {},
+      "master": true
+}'
 ```
-After the boilerplate paragraph, write a brief description about your repo.
 
+**Create instance of picker service**
 
-## Development
+```
+headnode# sdc-sapi /instances -d '
+{
+      "service_uuid": "<PICKER SERVICE UUID>",
+      "params": {
+        "brand": "joyent-minimal",
+        "alias": "picker0",
+        "hostname": "picker0"
+      },
+     "metadata": {
+        "SERVICE_NAME": "picker.<DATACENTER>.<REGION>.joyent.us",
+        "MUSKIE_DEFAULT_MAX_STREAMING_SIZE_MB": 5120,
+        "MUSKIE_MAX_UTILIZATION_PCT": 90,
+        "MUSKIE_MAX_OPERATOR_UTILIZATION_PCT": 92,
+        "DATACENTER": "<DC NAME>",
+        "SDC_NAMESERVERS": [
+        {
+          "host": "<TRITON BINDER IP>",
+          "port": 2181,
+          "num": 1,
+          "last": true
+        }],
+       "SAPI_URL": "<SAPI_URL>",
+       "user-script": "#!/usr/bin/bash\n#\n# This Source Code Form is subject to the terms of the Mozilla Public\n# License, v. 2.0. If a copy of the MPL was not distributed with this\n# file, You can obtain one at http://mozilla.org/MPL/2.0/.\n#\n\n#\n# Copyright (c) 2014, Joyent, Inc.\n#\n\nset -o xtrace\nset -o errexit\nset -o pipefail\n\n#\n# To use the same convention as SDC instances, the presence of the\n# /var/svc/.ran-user-script file indicates that the instance has already been\n# setup (i.e. the instance has booted previously).\n#\n# Upon first boot, run the setup.sh script if present.  On all boots including\n# the first one, run the configure.sh script if present.\n#\nSENTINEL=/var/svc/.ran-user-script\n\nDIR=/opt/smartdc/boot\n\n\nif [[ ! -e ${SENTINEL} ]]; then\n\tif [[ -f ${DIR}/setup.sh ]]; then\n\t\t${DIR}/setup.sh\n\tfi\n\n\ttouch ${SENTINEL}\nfi\n\nif [[ -f ${DIR}/configure.sh ]]; then\n\t${DIR}/configure.sh\nfi\n"
+      }
+}'
+```
 
-Describe steps necessary for development here.
+## Updating the Image
 
-    make all
+The following steps can be used to update the image for an existing picker SAPI service
 
+**Delete an existing picker service instances**
 
-## Test
+```
+headnode# sdc-sapi /instances/<PICKER_INSTANCE_UUID> -X DELETE
 
-Describe steps necessary for testing here.
+```
 
-    make test
+**Remove the old image**
 
+```
+headnode# oldimg=$(sdc-sapi /services?name=picker | json -H [0].params.image_uuid)
+headnode# sdc-imgadm delete $oldimg
+headnode# imgadm delete $oldimg
+```
 
-## Documentation
+**Install new image**
 
-[Joyent Engineering Guide is at docs/index.md](docs/index.md).
+```
+headnode# sdc-imgadm import -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
+headnode# imgadm install -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
+```
 
-To update the guidelines, edit "docs/index.md" and run `make docs`
-to update "docs/index.html". Works on either SmartOS or Mac OS X.
+**Update the picker SAPI service to use the new image**
 
+```
+headnode# svcuuid=$(sdc-sapi /services?name=picker | json -H [0].uuid)
+headnode# sdc-sapi /services/$svcuuid -X PUT -d '
+{
+  "action": "update",
+  "params": {
+      "image_uuid": "<NEW IMG UUID>"
+  }
+}'
+```
 
-## Starting a Repo Based on eng.git
-
-Create a new repo called "some-cool-fish" in "~/work" based on
-"eng.git":
-
-    ./tools/mkrepo $HOME/work/some-cool-fish
-
-
-## Your Other Sections Here
-
-Add other sections to your README as necessary. E.g. Running a demo, adding
-development data.
 
 
 ## License
 
-"eng: Joyent Engineering Guide" is licensed under the
+"manta-picker" is licensed under the
 [Mozilla Public License version 2.0](http://mozilla.org/MPL/2.0/).
 See the file LICENSE.
