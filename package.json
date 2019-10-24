@@ -4,15 +4,22 @@
   "version": "1.0.0",
   "author": "Joyent (joyent.com)",
   "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com:joyent/manta-picker.git"
+  },
   "dependencies": {
     "assert-plus": "1.0.0",
+    "csv-parse": "4.4.6",
+    "diff": "3.5.0",
+    "lodash": "4.17.13",
     "moray": "3.4.1",
     "restify": "4.3.4",
     "restify-errors": "4.3.0",
     "verror": "1.10.0"
   },
   "devDependencies": {
-    "eslint": "4.13.1",
+    "eslint": "4.18.2",
     "eslint-config-prettier": "^2.9.0",
     "eslint-plugin-joyent": "~2.0.0",
     "eslint-plugin-prettier": "^2.6.0",
