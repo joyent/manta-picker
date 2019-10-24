@@ -1,13 +1,13 @@
 # manta-picker
 
-This repo contains an under-development, early prototype of a standalone service that implements functionality similar to the mpicker tool in manta-muskie.  A draft RFD describing the motivation, requirement and approach for manta-picker is [here](https://github.com/joyent/rfd/tree/master/rfd/0170)
+This repo contains an under-development, early prototype of a standalone service that implements functionality similar to the mpicker tool in manta-muskie.  A draft RFD describing the motivation, requirements and approach for manta-picker is [here](https://github.com/joyent/rfd/tree/master/rfd/0170)
 
 
 
 
 ## Manually Deployment Procedure
 
-Normally the picker SAPI service would be created by manta-init and service instances would be created by manta-deploy.  However, joyent/sdc-manta has not yet been modified to do this.  Follow the steps below to manually deploy picker:
+Normally the picker SAPI service would be created by ```manta-init``` and service instances would be created by ```manta-deploy``` or ```manta-adm```.  However, the [joyent/sdc-manta](https://github.com/joyent/sdc-manta) repo has not yet been modified to do this.  Follow the steps below to manually deploy picker:
 
 **Build a picker image**
 
@@ -20,7 +20,7 @@ headnode# sdc-imgadm import -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
 headnode# imgadm install -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
 ```
 
-**Create picker SAPI service**
+**Create the picker SAPI service**
 
 ```
 headnode# sdc-sapi /services -d '
@@ -40,7 +40,7 @@ headnode# sdc-sapi /services -d '
 }'
 ```
 
-**Create instance of picker service**
+**Create an instance of the picker service**
 
 ```
 headnode# sdc-sapi /instances -d '
@@ -74,7 +74,7 @@ headnode# sdc-sapi /instances -d '
 
 The following steps can be used to update the image for an existing picker SAPI service
 
-**Delete an existing picker service instances**
+**Delete the existing picker service instances**
 
 ```
 headnode# sdc-sapi /instances/<PICKER_INSTANCE_UUID> -X DELETE
@@ -109,7 +109,8 @@ headnode# sdc-sapi /services/$svcuuid -X PUT -d '
 }'
 ```
 
-
+## To DO
+A rough list to-do list of development tasks is being maintained in the gist [here](https://gist.github.com/rejohnst/b25bb83c607bc9ed2cf474adfa9f2544)
 
 ## License
 
