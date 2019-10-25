@@ -33,6 +33,7 @@ pipeline {
     post {
         always {
             joyMattermostNotification()
+            joyMattermostNotification('rebalancer')
         }
     }
 }
