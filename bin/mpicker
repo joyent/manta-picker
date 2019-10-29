@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var mod_assert = require('assert-plus');
@@ -28,7 +28,6 @@ var mod_picker = require('../lib/picker');
 var MultiError = require('verror').MultiError;
 var sprintf = mod_util.format;
 var VError = mod_verror.VError;
-var muskie_errors = require('../lib/errors');
 
 ///-- Globals
 
@@ -164,14 +163,20 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
         return;
     }
 
-    // Basic validation of the Muskie config file.
-    if (!cfg.hasOwnProperty('storage')) {
-        cb(new VError('"storage" configuration not found'));
-        return;
-    }
-    if (!cfg.storage.hasOwnProperty('moray')) {
-        cb(new VError('"storage.moray" configuration not found'));
-        return;
+    // Basic validation of the Picker config file.
+    var reqd_props = [
+        "defaultMaxStreamingSizeMB",
+        "lag",
+        "maxOperatorUtilizationPct",
+        "maxUtilizationPct",
+        "moray",
+        "multiDC"
+    ];
+    for (const prop of reqd_props) {
+        if (!cfg.hasOwnProperty(prop)) {
+            cb(new VError('Required config prop ' + prop + ' not found'));
+            return;
+        }
     }
 
     if (opts.percentage && opts.percentage > 100) {
@@ -183,13 +188,13 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
         log: LOG,
         defaultMaxStreamingSizeMB: cfg.defaultMaxStreamingSizeMB ||
             DEF_MAX_STREAMING_SIZE_MB,
-        maxUtilizationPct: opts.percentage || cfg.storage.maxUtilizationPct ||
+        maxUtilizationPct: opts.percentage || cfg.maxUtilizationPct ||
             DEF_MAX_PERCENT_UTIL,
-        maxOperatorUtilizationPct: cfg.storage.maxOperatorUtilizationPct ||
+        maxOperatorUtilizationPct: cfg.maxOperatorUtilizationPct ||
             DEF_MAX_OPERATOR_PERCENT_UTIL,
-        multiDC: cfg.storage.multiDC,
-        moray: cfg.storage.moray,
-        lag: cfg.storage.lag
+        multiDC: cfg.multiDC,
+        moray: cfg.moray,
+        lag: cfg.lag
     };
 
     if (interval) {
@@ -311,7 +316,7 @@ MPicker.prototype.do_poll.options = commonOptions.concat([
         names: ['config', 'c'],
         type: 'string',
         help: 'Muskie configuration file',
-        default: '/opt/smartdc/muskie/etc/config.json',
+        default: '/opt/smartdc/picker/etc/config.json',
         helpArg: 'FILE',
         completionType: 'file'
     },
