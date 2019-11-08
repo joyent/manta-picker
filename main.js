@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright (c) 2019, Joyent, Inc.
+ * Copyright 2019 Joyent, Inc.
  */
 
 var assert = require('assert-plus');
@@ -86,7 +86,8 @@ function createPickerClient(cfg, log, onConnect) {
         multiDC: cfg.multiDC,
         defaultMaxStreamingSizeMB: cfg.defaultMaxStreamingSizeMB,
         maxUtilizationPct: cfg.maxUtilizationPct,
-        maxOperatorUtilizationPct: cfg.maxOperatorUtilizationPct
+        maxOperatorUtilizationPct: cfg.maxOperatorUtilizationPct,
+        testMorayData: cfg.testMorayData
     };
 
     var client = picker.createClient(opts);
@@ -140,8 +141,8 @@ function loadConfig(configFilePath) {
     createPickerClient(cfg, log, function _onPickerConnect (pickerClient) {
         var s;
 
-        log.info('requisite client connections established, '
-        + 'starting muskie servers');
+        log.info('Moray client connections established, '
+        + 'starting picker REST servers');
 
         s = server.createServer(pickerClient, log);
         s.on('error', function (err) {
@@ -149,7 +150,7 @@ function loadConfig(configFilePath) {
             process.exit(1);
         });
         s.listen(cfg.port, function () {
-            log.info('picker listening on %s', s.url);
+            log.info('picker REST service listening on %s', s.url);
         });
     });
 

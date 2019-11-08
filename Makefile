@@ -15,11 +15,11 @@ JS_FILES :=		$(shell find lib -name '*.js')
 JS_FILE +=		main.js
 SMF_MANIFESTS_IN =	smf/manifests/picker.xml.in
 
-## Added by Rui
 JSSTYLE_FILES =		$(JS_FILES)
 JSSTYLE_FLAGS =		-f $(ROOT)/tools/jsstyle.conf
 ESLINT_FILES =		$(JS_FILES)
-## /Added by Rui
+
+DOC_FILES =		index.md
 
 NODE_PREBUILT_VERSION =	v6.17.0
 NODE_PREBUILT_TAG = zone64

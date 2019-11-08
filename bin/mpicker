@@ -62,7 +62,7 @@ var commonOptions = [
 function MPicker() {
     mod_cmdln.Cmdln.call(this, {
         name: 'mpicker',
-        desc: 'Models the behavior of the Muskie "picker" component.',
+        desc: 'Models the behavior of the manta-picker component.',
         options: [
             {
                 names: ['help', 'h'],
@@ -202,17 +202,14 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
     }
     var p = mod_picker.createClient(p_opts);
 
-    function printTabularSummary(db) {
-        mod_assert.object(db, 'db');
-        var summary, dcs, columns, rows;
+    function printTabularSummary(sharks) {
+        var summary, columns, rows;
 
         summary = [];
         summary.push('polling options:');
         summary.push(' max percentage utilization: ' +
             p_opts.maxUtilizationPct);
         summary.push('');
-
-        dcs = Object.keys(db);
 
         var dc_label = 'DATACENTER';
         var msi_label = 'MANTA_STORAGE_ID';
@@ -240,18 +237,15 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
         ];
 
         rows = [];
-        dcs.forEach(function (dc) {
-            var sharks = db[dc];
+        sharks.forEach(function (s) {
+            var obj = {};
 
-            sharks.forEach(function (s) {
-                var obj = {};
-                obj[dc_label] = dc;
-                obj[msi_label] = s.manta_storage_id;
-                obj[pu_label] = s.percentUsed;
-                obj[amb_label] = s.availableMB;
-                obj[time_label] = new Date(s.timestamp).toISOString();
-                rows.push(obj);
-            });
+            obj[dc_label] = s.datacenter;
+            obj[msi_label] = s.manta_storage_id;
+            obj[pu_label] = s.percentUsed;
+            obj[amb_label] = s.availableMB;
+            obj[time_label] = new Date(s.timestamp).toISOString();
+            rows.push(obj);
         });
 
         if (!opts.header) {
@@ -266,20 +260,20 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
         });
     }
 
-    function printJSONSummary(db) {
+    function printJSONSummary(sharks) {
             var obj = {};
-            var dcs = Object.keys(db);
 
-            dcs.forEach(function (dc) {
-                obj[dc] = [];
-                var sharks = db[dc];
-                sharks.forEach(function (s) {
-                    obj[dc].push({
-                        manta_storage_id: s.manta_storage_id,
-                        availableMB: s.availableMB,
-                        timestamp: s.timestamp,
-                        percentUsed: s.percentUsed
-                    });
+            sharks.forEach(function (s) {
+                var dc = s.datacenter;
+
+                if (obj[dc] === undefined) {
+                    obj[dc] = [];
+                }
+                obj[dc].push({
+                    manta_storage_id: s.manta_storage_id,
+                    availableMB: s.availableMB,
+                    timestamp: s.timestamp,
+                    percentUsed: s.percentUsed
                 });
             });
             console.log(JSON.stringify(obj, null, 4));
@@ -315,7 +309,7 @@ MPicker.prototype.do_poll.options = commonOptions.concat([
     {
         names: ['config', 'c'],
         type: 'string',
-        help: 'Muskie configuration file',
+        help: 'Picker configuration file',
         default: '/opt/smartdc/picker/etc/config.json',
         helpArg: 'FILE',
         completionType: 'file'
