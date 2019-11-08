@@ -8,3 +8,5 @@ build
 docs/*.json
 docs/*.html
 *.tar.gz
+package-lock.json
+smf/manifests/picker.xml
