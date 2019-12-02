@@ -32,7 +32,7 @@ RELSTAGEDIR		:= /tmp/$(NAME)-$(STAMP)
 
 # This image is triton-origin-x86_64-18.4.0
 BASE_IMAGE_UUID = a9368831-958e-432d-a031-f8ce6768d190
-BUILDIMAGE_NAME = manta-picker
+BUILDIMAGE_NAME = mantav2-picker
 BUILDIMAGE_DESC	= Manta Picker
 AGENTS          = amon config registrar
 BUILDIMAGE_PKGSRC = 
