@@ -25,7 +25,10 @@ NODE_PREBUILT_VERSION =	v6.17.0
 NODE_PREBUILT_TAG = zone64
 NODE_PREBUILT_IMAGE=c2c31b00-1d60-11e9-9a77-ff9f06554b0f
 
+ENGBLD_REQUIRE          := $(shell git submodule update --init deps/eng)
 include ./deps/eng/tools/mk/Makefile.defs
+TOP ?= $(error Unable to access eng.git submodule Makefiles.)
+
 ROOT			:= $(shell pwd)
 RELEASE_TARBALL	:= $(NAME)-pkg-$(STAMP).tar.gz
 RELSTAGEDIR		:= /tmp/$(NAME)-$(STAMP)
@@ -38,9 +41,6 @@ AGENTS          = amon config registrar
 BUILDIMAGE_PKGSRC = 
 
 ENGBLD_USE_BUILDIMAGE   = true
-ENGBLD_REQUIRE          := $(shell git submodule update --init deps/eng)
-
-TOP ?= $(error Unable to access eng.git submodule Makefiles.)
 
 ifeq ($(shell uname -s),SunOS)
 	include ./deps/eng/tools/mk/Makefile.node_prebuilt.defs
