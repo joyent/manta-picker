@@ -23,7 +23,7 @@ headnode# imgadm install -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
 **Create the picker SAPI service**
 
 ```
-headnode# sdc-sapi /services -d '
+headnode# sdc-sapi /services -X POST -d '
 {
       "name": "picker",
       "application_uuid": "<MANTA APPLICATION UUID>",
@@ -43,7 +43,7 @@ headnode# sdc-sapi /services -d '
 **Create an instance of the picker service**
 
 ```
-headnode# sdc-sapi /instances -d '
+headnode# sdc-sapi /instances -X POST -d '
 {
       "service_uuid": "<PICKER SERVICE UUID>",
       "params": {
