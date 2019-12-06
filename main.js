@@ -8,19 +8,19 @@
  * Copyright (c) 2019, Joyent, Inc.
  */
 
+'use strict';
+
 var assert = require('assert-plus');
 var bunyan = require('bunyan');
 var dashdash = require('dashdash');
 var dtrace = require('dtrace-provider');
-var path = require('path');
 var fs = require('fs');
-var once = require('once'); // TODO need?
 var restify = require('restify');
 var picker = require('./lib/picker');
 var server = require('./lib/server');
 
 
-///--- Internal Functions
+// --- Internal Functions
 
 function getPickerOptions() {
     var options = [
@@ -58,7 +58,8 @@ function parseOptions() {
 
     try {
         opts = parser.parse(process.argv);
-        assert.object(opts, 'options'); } catch (e) {
+        assert.object(opts, 'options');
+    } catch (e) {
         usage(parser, e.message);
     }
 
@@ -69,8 +70,7 @@ function parseOptions() {
     return (opts);
 }
 
-function usage(parser, message)
-{
+function usage(parser, message) {
     console.error('picker: %s', message);
     console.error('usage: node main.js OPTIONS\n');
     console.error(parser.help());
@@ -112,7 +112,7 @@ function loadConfig(configFilePath) {
 
 
 
-///--- Mainline
+// --- Mainline
 
 (function main() {
     // DTrace probe setup
@@ -124,11 +124,6 @@ function loadConfig(configFilePath) {
     socket_timeout.dtp = dtp;
     dtp.enable();
 
-    const dtProbes = {
-        client_close: client_close,
-        socket_timeout: socket_timeout
-    };
-
     const opts = parseOptions();
     const cfg = loadConfig(opts.file);
     const log = bunyan.createLogger({
@@ -137,7 +132,7 @@ function loadConfig(configFilePath) {
         serializers: restify.bunyan.serializers
     });
 
-    createPickerClient(cfg, log, function _onPickerConnect (pickerClient) {
+    createPickerClient(cfg, log, function _onPickerConnect(pickerClient) {
         var s;
 
         log.info('requisite client connections established, '

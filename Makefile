@@ -12,7 +12,7 @@ NAME=picker
 
 JSON_FILES =		package.json
 JS_FILES :=		$(shell find lib -name '*.js')
-JS_FILE +=		main.js
+JS_FILES +=		main.js
 SMF_MANIFESTS_IN =	smf/manifests/picker.xml.in
 
 ## Added by Rui
