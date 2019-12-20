@@ -23,6 +23,7 @@ var mod_util = require('util');
 var mod_vasync = require('vasync');
 var mod_verror = require('verror');
 
+var constants = require('../lib/constants');
 var mod_picker = require('../lib/picker');
 
 var MultiError = require('verror').MultiError;
@@ -37,12 +38,6 @@ var LOG = mod_bunyan.createLogger({
     level: process.LOG_LEVEL || 'error',
     stream: process.stderr
 });
-
-///--- Constants
-
-var DEF_MAX_STREAMING_SIZE_MB = 5120;
-var DEF_MAX_PERCENT_UTIL = 90;
-var DEF_MAX_OPERATOR_PERCENT_UTIL = 92;
 
 /*
  * Common options for all submcommands.
@@ -165,10 +160,7 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
 
     // Basic validation of the Picker config file.
     var reqd_props = [
-        "defaultMaxStreamingSizeMB",
         "lag",
-        "maxOperatorUtilizationPct",
-        "maxUtilizationPct",
         "moray",
         "multiDC"
     ];
@@ -187,11 +179,11 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
     p_opts = {
         log: LOG,
         defaultMaxStreamingSizeMB: cfg.defaultMaxStreamingSizeMB ||
-            DEF_MAX_STREAMING_SIZE_MB,
+            constants.DEF_MAX_STREAMING_SIZE_MB,
         maxUtilizationPct: opts.percentage || cfg.maxUtilizationPct ||
-            DEF_MAX_PERCENT_UTIL,
+            constants.DEF_MAX_PERCENT_UTIL,
         maxOperatorUtilizationPct: cfg.maxOperatorUtilizationPct ||
-            DEF_MAX_OPERATOR_PERCENT_UTIL,
+            constants.DEF_MAX_OPERATOR_PERCENT_UTIL,
         multiDC: cfg.multiDC,
         moray: cfg.moray,
         lag: cfg.lag
