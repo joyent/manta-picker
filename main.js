@@ -16,9 +16,10 @@ var dashdash = require('dashdash');
 var dtrace = require('dtrace-provider');
 var fs = require('fs');
 var restify = require('restify');
+
+var constants = require('./lib/constants');
 var picker = require('./lib/picker');
 var server = require('./lib/server');
-
 
 // --- Internal Functions
 
@@ -84,9 +85,12 @@ function createPickerClient(cfg, log, onConnect) {
         moray: cfg.moray,
         log: log.child({component: 'picker'}, true),
         multiDC: cfg.multiDC,
-        defaultMaxStreamingSizeMB: cfg.defaultMaxStreamingSizeMB,
-        maxUtilizationPct: cfg.maxUtilizationPct,
-        maxOperatorUtilizationPct: cfg.maxOperatorUtilizationPct,
+        defaultMaxStreamingSizeMB: cfg.defaultMaxStreamingSizeMB ||
+            constants.DEF_MAX_STREAMING_SIZE_MB,
+        maxUtilizationPct: cfg.maxUtilizationPct ||
+            constants.DEF_MAX_PERCENT_UTIL,
+        maxOperatorUtilizationPct: cfg.maxOperatorUtilizationPct ||
+            constants.DEF_MAX_OPERATOR_PERCENT_UTIL,
         testMorayData: cfg.testMorayData
     };
 
