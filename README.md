@@ -46,7 +46,7 @@ To build picker locally, follow the [standard build instructions for Manta/Trito
 
 `make buildimage`
 
-On success, a new picker image will be created under ```bits/picker```  Copy these files to the headnode in you Manta test environment.
+On success, a new picker image will be created under ```bits/picker```  Copy these files to the headnode in your Manta test environment.
 
 **Install the picker image**
 
