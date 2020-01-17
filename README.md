@@ -1,116 +1,61 @@
 # manta-picker
 
-This repo contains an under-development, early prototype of a standalone service that implements functionality similar to the mpicker tool in manta-muskie.  A draft RFD describing the motivation, requirements and approach for manta-picker is [here](https://github.com/joyent/rfd/tree/master/rfd/0170)
+The manta-picker is a Manta V2 service that provides an interface for retrieving a cached view of the contents of the `manta_storage` bucket via the /poll REST endpoint.  The Rebalancer is the only current consumer of manta-picker.  Future versions of buckets-api will be modified to consume the manta-picker service.
 
-
+A draft RFD describing the motivation, requirements and approach for manta-picker is [here](https://github.com/joyent/rfd/tree/master/rfd/0170).  The Picker API is documented [here](https://github.com/joyent/manta-picker/blob/master/docs/index.md)
 
 
 ## Manually Deployment Procedure
 
-Normally the picker SAPI service would be created by ```manta-init``` and service instances would be created by ```manta-deploy``` or ```manta-adm```.  However, the [joyent/sdc-manta](https://github.com/joyent/sdc-manta) repo has not yet been modified to do this.  Follow the steps below to manually deploy picker:
+Currently, the manta-picker service is not included in a default Manta V2 deployment.
 
-**Build a picker image**
+Images built from the master branch of manta-picker are available in the ```dev``` channel as ```mantav2-picker```  To deploy the latest picker bits in your manta test environment, run the following from the GZ of the headnode:
+
+**Install the latest picker service image**
+
+```
+# picker_image=$(updates-imgadm -C <channel> list name=mantav2-picker --latest -H -o uuid)
+# sdc-imgadm import -S https://updates.joyent.com $picker_image
+```
+
+Set `channel` to `dev` to install the most recent image built from master.  Set `channel` to `experimental` to pick up images built from a development branch.
+
+Export the current manta topology to JSON**
+
+```
+# manta-adm show -j -s > manta.json
+```
+
+**Add the following entry to manta.json**
+
+```
+"picker": { "$picker_image": 1 }
+```
+
+**Update the manta deployment**
+
+```
+# manta-adm update --skip-verify-channel manta.json
+```
+
+## Development
+
+The resulting image will be posted to updates.joyent.com. The image will be available on the `experimental` channel when building a development branch, or the `dev` channel when building the `master` branch.
+
+To build picker locally, follow the [standard build instructions for Manta/Triton components](https://github.com/joyent/triton/blob/master/docs/developer-guide/building.md). If you already have a development zone available, run:
 
 `make buildimage`
 
-**Install picker image**
+On success, a new picker image will be created under ```bits/picker```  Copy these files to the headnode in your Manta test environment.
+
+**Install the picker image**
 
 ```
-headnode# sdc-imgadm import -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
-headnode# imgadm install -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
+# sdc-imgadm import -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
+# imgadm install -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
 ```
 
-**Create the picker SAPI service**
-
-```
-headnode# sdc-sapi /services -X POST -d '
-{
-      "name": "picker",
-      "application_uuid": "<MANTA APPLICATION UUID>",
-      "params": {
-        "networks": [
-          "manta",
-          "admin"
-        ],
-        "ram": 256,
-        "image_uuid": "<PICKER IMAGE UUID>"
-      },
-      "metadata": {},
-      "master": true
-}'
-```
-
-**Create an instance of the picker service**
-
-```
-headnode# sdc-sapi /instances -X POST -d '
-{
-      "service_uuid": "<PICKER SERVICE UUID>",
-      "params": {
-        "brand": "joyent-minimal",
-        "alias": "picker0",
-        "hostname": "picker0"
-      },
-     "metadata": {
-        "SERVICE_NAME": "picker.<DATACENTER>.<REGION>.joyent.us",
-        "MUSKIE_DEFAULT_MAX_STREAMING_SIZE_MB": 5120,
-        "MUSKIE_MAX_UTILIZATION_PCT": 90,
-        "MUSKIE_MAX_OPERATOR_UTILIZATION_PCT": 92,
-        "DATACENTER": "<DC NAME>",
-        "SDC_NAMESERVERS": [
-        {
-          "host": "<TRITON BINDER IP>",
-          "port": 2181,
-          "num": 1,
-          "last": true
-        }],
-       "SAPI_URL": "<SAPI_URL>",
-       "user-script": "#!/usr/bin/bash\n#\n# This Source Code Form is subject to the terms of the Mozilla Public\n# License, v. 2.0. If a copy of the MPL was not distributed with this\n# file, You can obtain one at http://mozilla.org/MPL/2.0/.\n#\n\n#\n# Copyright (c) 2014, Joyent, Inc.\n#\n\nset -o xtrace\nset -o errexit\nset -o pipefail\n\n#\n# To use the same convention as SDC instances, the presence of the\n# /var/svc/.ran-user-script file indicates that the instance has already been\n# setup (i.e. the instance has booted previously).\n#\n# Upon first boot, run the setup.sh script if present.  On all boots including\n# the first one, run the configure.sh script if present.\n#\nSENTINEL=/var/svc/.ran-user-script\n\nDIR=/opt/smartdc/boot\n\n\nif [[ ! -e ${SENTINEL} ]]; then\n\tif [[ -f ${DIR}/setup.sh ]]; then\n\t\t${DIR}/setup.sh\n\tfi\n\n\ttouch ${SENTINEL}\nfi\n\nif [[ -f ${DIR}/configure.sh ]]; then\n\t${DIR}/configure.sh\nfi\n"
-      }
-}'
-```
-
-## Updating the Image
-
-The following steps can be used to update the image for an existing picker SAPI service
-
-**Delete the existing picker service instances**
-
-```
-headnode# sdc-sapi /instances/<PICKER_INSTANCE_UUID> -X DELETE
-
-```
-
-**Remove the old image**
-
-```
-headnode# oldimg=$(sdc-sapi /services?name=picker | json -H [0].params.image_uuid)
-headnode# sdc-imgadm delete $oldimg
-headnode# imgadm delete $oldimg
-```
-
-**Install new image**
-
-```
-headnode# sdc-imgadm import -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
-headnode# imgadm install -f <NEW IMG>.zfs.gz -m <NEW IMG>.imgmanifest
-```
-
-**Update the picker SAPI service to use the new image**
-
-```
-headnode# svcuuid=$(sdc-sapi /services?name=picker | json -H [0].uuid)
-headnode# sdc-sapi /services/$svcuuid -X PUT -d '
-{
-  "action": "update",
-  "params": {
-      "image_uuid": "<NEW IMG UUID>"
-  }
-}'
-```
-
-## To DO
-A rough list to-do list of development tasks is being maintained in the gist [here](https://gist.github.com/rejohnst/b25bb83c607bc9ed2cf474adfa9f2544)
+Then deploy/update the picker service via ```manta-adm update```
 
 ## License
 
