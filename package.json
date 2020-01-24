@@ -1,6 +1,6 @@
 {
-  "name": "picker",
-  "description": "Manta picker ... TODO: desc",
+  "name": "storinfo",
+  "description": "Manta Storage Info Service",
   "version": "1.0.0",
   "author": "Joyent (joyent.com)",
   "private": true,

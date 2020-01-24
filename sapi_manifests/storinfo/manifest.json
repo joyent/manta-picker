@@ -1,0 +1,6 @@
+{
+    "name": "storinfo",
+    "path": "/opt/smartdc/storinfo/etc/config.json",
+    "master": true
+}
+

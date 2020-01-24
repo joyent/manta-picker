@@ -1,5 +1,5 @@
 ---
-title: Manta Picker API
+title: Manta Storinfo API
 apisections: 
 markdown2extras: tables, code-friendly
 ---
@@ -13,7 +13,7 @@ markdown2extras: tables, code-friendly
     Copyright 2020 Joyent, Inc.
 -->
 
-# Picker API
+# Storinfo API
 
 
 
@@ -64,6 +64,6 @@ Get up to the next 100 results:
 
 ## FlushCache (POST /flush)
 
-Forces the picker's cached view of the manta_storage bucket to be immediately invalidated and refreshed.  The only intended consumer of this API is the Rebalancer, which will call this API after marking a storage node as read-only, prior to evacuating the objects on it.
+Forces the storinfo's cached view of the manta_storage bucket to be immediately invalidated and refreshed.  The only intended consumer of this API is the Rebalancer, which will call this API after marking a storage node as read-only, prior to evacuating the objects on it.
 
 This interfaces takes no input parameters.
