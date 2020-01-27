@@ -2,7 +2,7 @@
 
 The storinfo service is a Manta V2 service that provides an interface for retrieving a cached view of the contents of the `manta_storage` bucket via the /poll REST endpoint.  The Rebalancer is the only current consumer of storinfo.  Future versions of buckets-api will be modified to consume the storinfo service.
 
-A draft RFD describing the motivation, requirements and approach for manta-storinfo is [here](https://github.com/joyent/rfd/tree/master/rfd/0170).  The Picker API is documented [here](https://github.com/joyent/manta-storinfo/blob/master/docs/index.md)
+A draft RFD describing the motivation, requirements and approach for manta-storinfo is [here](https://github.com/joyent/rfd/tree/master/rfd/0170).  The Storinfo API is documented [here](https://github.com/joyent/manta-storinfo/blob/master/docs/index.md)
 
 
 ## Manually Deployment Procedure
