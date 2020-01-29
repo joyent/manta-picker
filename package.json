@@ -1,12 +1,12 @@
 {
-  "name": "picker",
-  "description": "Manta picker ... TODO: desc",
+  "name": "storinfo",
+  "description": "Manta Storage Info Service",
   "version": "1.0.0",
   "author": "Joyent (joyent.com)",
   "private": true,
   "repository": {
     "type": "git",
-    "url": "git+ssh://git@github.com:joyent/manta-picker.git"
+    "url": "git+ssh://git@github.com:joyent/manta-storinfo.git"
   },
   "dependencies": {
     "assert-plus": "1.0.0",

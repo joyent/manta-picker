@@ -8,7 +8,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 var mod_assert = require('assert-plus');
@@ -24,7 +24,7 @@ var mod_vasync = require('vasync');
 var mod_verror = require('verror');
 
 var constants = require('../lib/constants');
-var mod_picker = require('../lib/picker');
+var mod_storinfo = require('../lib/storinfo');
 
 var MultiError = require('verror').MultiError;
 var sprintf = mod_util.format;
@@ -32,7 +32,7 @@ var VError = mod_verror.VError;
 
 ///-- Globals
 
-var NAME = 'mpicker';
+var NAME = 'mstorinfo';
 var LOG = mod_bunyan.createLogger({
     name: NAME,
     level: process.LOG_LEVEL || 'error',
@@ -52,12 +52,12 @@ var commonOptions = [
 
 
 /*
- * Creates an instance of the MPicker object.
+ * Creates an instance of the MStorinfo object.
  */
-function MPicker() {
+function MStorinfo() {
     mod_cmdln.Cmdln.call(this, {
-        name: 'mpicker',
-        desc: 'Models the behavior of the manta-picker component.',
+        name: 'mstorinfo',
+        desc: 'Models the behavior of the manta-storinfo component.',
         options: [
             {
                 names: ['help', 'h'],
@@ -83,12 +83,12 @@ function MPicker() {
 
     this.arg0 = NAME;
 }
-mod_util.inherits(MPicker, mod_cmdln.Cmdln);
+mod_util.inherits(MStorinfo, mod_cmdln.Cmdln);
 
 /*
  * Print an error message, then a help message, then exit.
  */
-MPicker.prototype.usage = function usage(message, subcmd, cb) {
+MStorinfo.prototype.usage = function usage(message, subcmd, cb) {
     mod_assert.string(message, 'message');
     mod_assert.string(subcmd, 'subcmd');
 
@@ -104,7 +104,7 @@ MPicker.prototype.usage = function usage(message, subcmd, cb) {
  * Checks whether the "help" option was specified.  If so, print the usage
  * message and exit.
  */
-MPicker.prototype.checkHelpRequested = function (subcmd, opts, cb) {
+MStorinfo.prototype.checkHelpRequested = function (subcmd, opts, cb) {
     var self = this;
 
     if (opts.help) {
@@ -116,16 +116,16 @@ MPicker.prototype.checkHelpRequested = function (subcmd, opts, cb) {
 
 /*
  * "Polls" a Moray for storage information and prints a summary to stdout.
- * Optionally, you may provide an interval for which the Picker will poll and a
+ * Optionally, you may provide an interval for which the Storinfo will poll and a
  * count of polls to complete.
  *
- * Polling requires instantiating a Picker with a valid Moray client, which
+ * Polling requires instantiating a Storinfo with a valid Moray client, which
  * requires some configuration from the user.  This command expects the Muskie
  * configuration format.  By default, we assume the configuration is located at
  * /opt/smartdc/muskie/etc/config.json, which is where the configuration is
  * located in a deployed webapi zone.
  */
-MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
+MStorinfo.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
     var self = this;
     var interval, count, cfg, p_opts, iteration;
 
@@ -158,7 +158,7 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
         return;
     }
 
-    // Basic validation of the Picker config file.
+    // Basic validation of the Storinfo config file.
     var reqd_props = [
         "lag",
         "moray",
@@ -195,7 +195,7 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
     if (interval) {
         p_opts.storageInterval = interval * 1000;
     }
-    var p = mod_picker.createClient(p_opts);
+    var p = mod_storinfo.createClient(p_opts);
 
     function printTabularSummary(sharks) {
         var summary, columns, rows;
@@ -275,7 +275,7 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
     }
 
     /*
-     * The Picker emits a 'topology' event every time it receives a response
+     * The Storinfo emits a 'topology' event every time it receives a response
      * from its polling, so we can listen for this to see the poll response.
      */
     iteration = 0;
@@ -297,15 +297,15 @@ MPicker.prototype.do_poll = function do_poll(subcmd, opts, args, cb) {
     });
 };
 
-MPicker.prototype.do_poll.options = commonOptions.concat([
+MStorinfo.prototype.do_poll.options = commonOptions.concat([
     {
-        group: 'mpicker poll options'
+        group: 'mstorinfo poll options'
     },
     {
         names: ['config', 'c'],
         type: 'string',
-        help: 'Picker configuration file',
-        default: '/opt/smartdc/picker/etc/config.json',
+        help: 'Storinfo configuration file',
+        default: '/opt/smartdc/storinfo/etc/config.json',
         helpArg: 'FILE',
         completionType: 'file'
     },
@@ -343,11 +343,11 @@ MPicker.prototype.do_poll.options = commonOptions.concat([
 ]);
 
 
-MPicker.prototype.do_poll.help = [
+MStorinfo.prototype.do_poll.help = [
     'Poll Moray for storage records and summarizes the results.',
     '',
     'Usage:',
-    '    mpicker poll [OPTIONS] [INTERVAL [COUNT]]',
+    '    mstorinfo poll [OPTIONS] [INTERVAL [COUNT]]',
     '',
     '{{options}}',
     '',
@@ -357,7 +357,7 @@ MPicker.prototype.do_poll.help = [
     'Optionally, you may provide a polling interval and a count of polls to',
     'complete.  For example, this would poll Moray every 10 seconds for 3',
     'intervals:',
-    '   mpicker poll 10 3',
+    '   mstorinfo poll 10 3',
     '',
     'The `poll` subcommand expects a configuration file matching the format',
     'of Muskie\'s configuration file.  In particular, the following objects',
@@ -371,10 +371,10 @@ MPicker.prototype.do_poll.help = [
     'see storage information for all storage nodes, regardless of how close ',
     'to capacity they are, you could poll with a max percentage utilization ',
     'of 100:',
-    '   mpicker poll -p 100',
+    '   mstorinfo poll -p 100',
     '',
     'You may also print the `poll` output in JSON format with the -j flag',
-    '   mpicker poll -j',
+    '   mstorinfo poll -j',
     ''
 ].join('\n');
 
@@ -382,6 +382,6 @@ MPicker.prototype.do_poll.help = [
 
 //--- Mainline
 
-var cli = new MPicker();
+var cli = new MStorinfo();
 cli.showErrStack = false;
 mod_cmdln.main(cli);

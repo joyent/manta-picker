@@ -5,15 +5,15 @@
 #
 
 #
-# Copyright 2019 Joyent, Inc.
+# Copyright 2020 Joyent, Inc.
 #
 
-NAME=picker
+NAME=storinfo
 
 JSON_FILES =		package.json
 JS_FILES :=		$(shell find lib -name '*.js')
 JS_FILES +=		main.js
-SMF_MANIFESTS_IN =	smf/manifests/picker.xml.in
+SMF_MANIFESTS_IN =	smf/manifests/storinfo.xml.in
 
 JSSTYLE_FILES =		$(JS_FILES)
 JSSTYLE_FLAGS =		-f $(ROOT)/tools/jsstyle.conf
@@ -35,8 +35,8 @@ RELSTAGEDIR		:= /tmp/$(NAME)-$(STAMP)
 
 # This image is triton-origin-x86_64-18.4.0
 BASE_IMAGE_UUID = a9368831-958e-432d-a031-f8ce6768d190
-BUILDIMAGE_NAME = mantav2-picker
-BUILDIMAGE_DESC	= Manta Picker
+BUILDIMAGE_NAME = mantav2-storinfo
+BUILDIMAGE_DESC	= Manta Storage Info
 AGENTS          = amon config registrar
 BUILDIMAGE_PKGSRC = 
 

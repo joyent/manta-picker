@@ -7,11 +7,11 @@
 -->
 
 <!--
-    Copyright 2019 Joyent, Inc.
+    Copyright 2020 Joyent, Inc.
 -->
 
-<service_bundle type="manifest" name="picker">
-    <service name="manta/application/picker" type="service" version="1">
+<service_bundle type="manifest" name="storinfo">
+    <service name="manta/application/storinfo" type="service" version="1">
 
         <dependency name="network" grouping="require_all" restart_on="error" type="service">
             <service_fmri value="svc:/network/physical" />
@@ -28,7 +28,7 @@
         <stability value='Unstable' />
 
         <template>
-            <common_name><loctext xml:lang="C">Manta Picker Service</loctext></common_name>
+            <common_name><loctext xml:lang="C">Manta Storinfo Service</loctext></common_name>
         </template>
 
     </service>

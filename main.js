@@ -5,7 +5,7 @@
  */
 
 /*
- * Copyright 2019 Joyent, Inc.
+ * Copyright 2020 Joyent, Inc.
  */
 
 'use strict';
@@ -18,12 +18,12 @@ var fs = require('fs');
 var restify = require('restify');
 
 var constants = require('./lib/constants');
-var picker = require('./lib/picker');
+var storinfo = require('./lib/storinfo');
 var server = require('./lib/server');
 
 // --- Internal Functions
 
-function getPickerOptions() {
+function getStorinfoOptions() {
     var options = [
         {
             names: ['file', 'f'],
@@ -55,7 +55,7 @@ function getPickerOptions() {
  */
 function parseOptions() {
     var opts;
-    var parser = new dashdash.Parser({options: getPickerOptions()});
+    var parser = new dashdash.Parser({options: getStorinfoOptions()});
 
     try {
         opts = parser.parse(process.argv);
@@ -72,18 +72,18 @@ function parseOptions() {
 }
 
 function usage(parser, message) {
-    console.error('picker: %s', message);
+    console.error('storinfo: %s', message);
     console.error('usage: node main.js OPTIONS\n');
     console.error(parser.help());
     process.exit(2);
 }
 
-function createPickerClient(cfg, log, onConnect) {
+function createStorinfoClient(cfg, log, onConnect) {
     var opts = {
         interval: cfg.interval,
         lag: cfg.lag,
         moray: cfg.moray,
-        log: log.child({component: 'picker'}, true),
+        log: log.child({component: 'storinfo'}, true),
         multiDC: cfg.multiDC,
         defaultMaxStreamingSizeMB: cfg.defaultMaxStreamingSizeMB ||
             constants.DEF_MAX_STREAMING_SIZE_MB,
@@ -94,10 +94,10 @@ function createPickerClient(cfg, log, onConnect) {
         testMorayData: cfg.testMorayData
     };
 
-    var client = picker.createClient(opts);
+    var client = storinfo.createClient(opts);
 
     client.once('connect', function _onConnect() {
-        log.info('picker connected %s', client.toString());
+        log.info('storinfo connected %s', client.toString());
         onConnect(client);
     });
 }
@@ -121,7 +121,7 @@ function loadConfig(configFilePath) {
 
 (function main() {
     // DTrace probe setup
-    var dtp = dtrace.createDTraceProvider('picker');
+    var dtp = dtrace.createDTraceProvider('storinfo');
     var client_close = dtp.addProbe('client_close', 'json');
     var socket_timeout = dtp.addProbe('socket_timeout', 'json');
 
@@ -137,19 +137,19 @@ function loadConfig(configFilePath) {
         serializers: restify.bunyan.serializers
     });
 
-    createPickerClient(cfg, log, function _onPickerConnect(pickerClient) {
+    createStorinfoClient(cfg, log, function _onStorinfoConnect(storinfoClient) {
         var s;
 
         log.info('Moray client connections established, '
-        + 'starting picker REST servers');
+        + 'starting storinfo REST servers');
 
-        s = server.createServer(pickerClient, log);
+        s = server.createServer(storinfoClient, log);
         s.on('error', function (err) {
             log.fatal(err, 'createServer error');
             process.exit(1);
         });
         s.listen(cfg.port, function () {
-            log.info('picker REST service listening on %s', s.url);
+            log.info('storinfo REST service listening on %s', s.url);
         });
     });
 
