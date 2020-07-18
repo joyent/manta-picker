@@ -13,7 +13,7 @@
     "cmdln": "6.0.0",
     "csv-parse": "4.4.6",
     "diff": "3.5.0",
-    "lodash": "4.17.13",
+    "lodash": "4.17.19",
     "moray": "3.4.1",
     "restify": "4.3.4",
     "restify-errors": "4.3.0",
